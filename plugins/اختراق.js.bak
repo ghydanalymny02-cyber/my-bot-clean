@@ -1,0 +1,76 @@
+module.exports = {
+  command: ['اختراق'],
+  description: 'مزاح: تم اختراقك بنجاح 😱💻',
+  category: 'ترفيه',
+  usage: '.اختراق [منشن/رد]',
+  group: true,
+
+  async execute(sock, msg) {
+    const from = msg.key.remoteJid;
+
+    const toM = a => '@' + a.split('@')[0];
+
+    // نجيب الهدف من منشن أو ريبلاي
+    let target;
+    if (msg.message?.extendedTextMessage?.contextInfo?.mentionedJid?.length) {
+      target = msg.message.extendedTextMessage.contextInfo.mentionedJid[0]; 
+    } else if (msg.message?.extendedTextMessage?.contextInfo?.participant) {
+      target = msg.message.extendedTextMessage.contextInfo.participant; 
+    } else {
+      return sock.sendMessage(from, {
+        text: "⚠️ لازم تعمل منشن أو ريبلاي على رسالة عشان أحدد مين أختَرِقه 😅",
+      }, { quoted: msg });
+    }
+
+    const loadingSteps = [
+      "*جاري الحصول علي عنوان IP هاتف الضحية...*",
+      "*جاري تحميل الاختراق* 《 ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒》0%",
+      "*جاري تحميل الصور* 《 █▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒》10%",
+      "*تم تحميل الصور* 《 ██▒▒▒▒▒▒▒▒▒▒▒▒▒▒》20%",
+      "*جاري تحميل الفيديوهات* 《 ███▒▒▒▒▒▒▒▒▒▒▒▒▒》30%",
+      "*تم تحميل الفيديوهات* 《 ████▒▒▒▒▒▒▒▒▒▒▒▒》40%",
+      "*جاري تحميل الاصوات* 《 █████▒▒▒▒▒▒▒▒▒▒▒》50%",
+      "*تم تحميل الاصوات* 《 ██████▒▒▒▒▒▒▒▒▒▒》60%",
+      "*جاري تحميل الملفات* 《 ███████▒▒▒▒▒▒▒▒▒》70%",
+      "*تم تحميل الملفات* 《 ████████▒▒▒▒▒▒▒▒▒》80%",
+      "*جاري تحميل محادثات واتساب* 《 █████████▒▒▒▒▒▒▒》90%",
+      "*تم تحميل محادثات واتساب* 《 ███████████▒▒▒▒▒》92%",
+      "*يتم رفع الاختراق علي السيرفر* 《 ███████████▒▒▒▒▒》95%",
+      "*تم الاتصال بجهاز الضحيه.. جاري تحميل البيانات* 《 ███████████▒▒▒▒▒》96%",
+      "*اختراق الضحيه 100% ✅* 《 ████████████████》100%",
+      "*جاري حفظ بيانات الضحيه...* ⌛",
+      "*تم حفظ بيانات الضحيه بنجاح ✅*"
+    ];
+
+    // نبعت الرسالة الأولى
+    let { key } = await sock.sendMessage(from, {
+      text: loadingSteps[0],
+      mentions: [target]
+    }, { quoted: msg });
+
+    // نعدل نفس الرسالة بكل الخطوات
+    for (let i = 1; i < loadingSteps.length; i++) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      await sock.sendMessage(from, {
+        text: loadingSteps[i],
+        edit: key,
+        mentions: [target]
+      });
+    }
+
+    // الرسالة النهائية
+    const finalText = `━━━━━━━⬣ *👾* ⬣━━━━━━━
+> *تم اختراقك بنجاح* ✅
+${toM(target)} ملفاتك وبياناتك عند شات المطور 👨‍💻
+
+> *❥ بوت شادو ♜𝑺𝒉𝒂𝒅𝒐 𝑩𝒐𝒕꧂*
+━━━━━━━⬣ *👾* ⬣━━━━━━━`;
+
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    await sock.sendMessage(from, {
+      text: finalText,
+      edit: key,
+      mentions: [target]
+    });
+  }
+};
