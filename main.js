@@ -1,86 +1,126 @@
-// ====== DANTE MAIN BOT (Optimized for Render) ======
+// ====== DANTE MAIN BOT (Optimized for Render Free) ======
 const {
-  default: makeWASocket,
-  useMultiFileAuthState,
-  DisconnectReason,
-  fetchLatestBaileysVersion,
+    default: makeWASocket,
+    useMultiFileAuthState,
+    DisconnectReason,
+    fetchLatestBaileysVersion,
 } = require("@whiskeysockets/baileys");
 const fs = require("fs-extra");
 const pino = require("pino");
 const path = require("path");
 const chalk = require("chalk");
+const readline = require("readline");
+const { exec } = require("child_process");
+const http = require("http"); // استدعاء سيرفر الويب
 const logger = require("./utils/console");
 
+// ====== Fast Input Bypass for Cloud ======
+const ask = (q) => {
+    return new Promise((resolve) => {
+        if (q.includes("Phone Number")) {
+            return resolve("967700821174");
+        }
+        const rl = readline.createInterface({
+            input: process.stdin,
+            output: process.stdout,
+        });
+        rl.question(q, (a) => {
+            rl.close();
+            resolve(a.trim());
+        });
+    });
+};
+
+// ====== ASCII BANNER ======
 console.clear();
-console.log(chalk.red.bold("\n[!] Starting Dante Bot...\n"));
+console.log(
+chalk.redBright(`
+██████╗  █████╗ ███╗   ██╗████████╗███████╗
+██╔══██╗██╔══██╗████╗  ██║╚══██╔══╝██╔════╝
+██║  ██║███████║██╔██╗ ██║   ██║   █████╗  
+██║  ██║██╔══██║██║╚██╗██║   ██║   ██╔══╝  
+██████╔╝██║  ██║██║ ╚████║   ██║   ███████╗
+╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═══╝   ╚═╝   ╚══════╝
+`)
+);
 
+// ====== MAIN START FUNCTION ======
 async function startBot() {
-  try {
-    const sessionPath = path.join(__dirname, "ملف_الاتصال");
-    await fs.ensureDir(sessionPath);
+    try {
+        const sessionPath = path.join(__dirname, "ملف_اتصال");
+        await fs.ensureDir(sessionPath);
 
-    const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
-    const { version } = await fetchLatestBaileysVersion();
+        const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
+        const { version } = await fetchLatestBaileysVersion();
 
-    const sock = makeWASocket({
-      version,
-      auth: state,
-      browser: ["Chrome", "Ubuntu", "3.0.0"],
-      logger: pino({ level: "silent" }),
-      printQRInTerminal: false,
-    });
+        const sock = makeWASocket({
+            version,
+            auth: state,
+            browser: ["Ubuntu", "Chrome", "20.0.04"],
+            logger: pino({ level: "silent" }),
+            markOnlineOnConnect: true,
+            generateHighQualityLinkPreview: true,
+            printQRInTerminal: false,
+            syncFullHistory: false,
+        });
 
-    // ====== AUTOMATED PAIRING SYSTEM ======
-    if (!sock.authState.creds.registered) {
-      setTimeout(async () => {
-        let phone = process.env.PAIRING_NUMBER || ""; 
-        phone = phone.replace(/\D/g, "");
-
-        if (!phone) {
-          logger.warn("⚠️ PAIRING_NUMBER missing in Env!");
-          return;
+        // تفعيل كود الاقتران تلقائياً إذا تطلب الأمر
+        if (!sock.authState.creds.registered) {
+            console.log(chalk.yellow("Setup Required - Pairing Code Mode"));
+            setTimeout(async () => {
+                try {
+                    let phoneNumber = "967700821174";
+                    let code = await sock.requestPairingCode(phoneNumber);
+                    console.log(chalk.black.bgGreen.bold(`\n Your New Pairing Code Is: ${code} \n`));
+                } catch (pairErr) {
+                    console.log(chalk.red("Error generating pairing code:"), pairErr);
+                }
+            }, 3000);
         }
 
-        try {
-          logger.info("Requesting pairing code for: " + phone);
-          const code = await sock.requestPairingCode(phone);
-          console.log(
-            chalk.greenBright(`\n───────────────────────────────\n✅ YOUR PAIRING CODE: ${code}\n───────────────────────────────\n`)
-          );
-        } catch (err) {
-          logger.error("Failed to get code, retrying...");
-          setTimeout(startBot, 5000);
+        sock.ev.on("creds.update", saveCreds);
+
+        sock.ev.on("connection.update", async (update) => {
+            const { connection, lastDisconnect } = update;
+            if (connection === "close") {
+                const shouldReconnect = lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut;
+                console.log(chalk.red(`Connection closed. Reconnecting: ${shouldReconnect}`));
+                if (shouldReconnect) startBot();
+            } else if (connection === "open") {
+                console.log(chalk.green("Dante Bot is successfully connected to WhatsApp! ✅"));
+            }
+        });
+
+        // تفعيل الاستماع للأوامر والرد التلقائي فورا
+        if (typeof logger.listenToConsole === "function") {
+            logger.listenToConsole(sock);
         }
-      }, 10000); 
+
+        // تشغيل معالج أوامر الشات الأساسي للبوت إذا كان متوفر
+        if (global.select && typeof global.select === "function") {
+            sock.ev.on("messages.upsert", async (chatUpdate) => {
+                try {
+                    const m = chatUpdate.messages[0];
+                    if (!m.message) return;
+                    await global.select(sock, m, chatUpdate);
+                } catch (err) {
+                    console.log(err);
+                }
+            });
+        }
+
+    } catch (err) {
+        console.error(chalk.red("Critical error in startBot:"), err);
+        setTimeout(startBot, 5000);
     }
-    // ====== CONNECTION HANDLER ======
-    sock.ev.on("connection.update", async (update) => {
-      const { connection, lastDisconnect } = update;
-      if (connection === "connecting") logger.info("Connecting to WhatsApp...");
-      if (connection === "open") {
-        logger.success(`✅ Connected!`);
-        require("./handlers/handler").handleMessagesLoader();
-      }
-      if (connection === "close") {
-        const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
-        if (shouldReconnect) {
-          logger.warn("Reconnecting...");
-          setTimeout(startBot, 5000);
-        }
-      }
-    });
-
-    sock.ev.on("messages.upsert", async (m) => {
-      const { handleMessages } = require("./handlers/handler");
-      await handleMessages(sock, m);
-    });
-
-    sock.ev.on("creds.update", saveCreds);
-
-  } catch (err) {
-    logger.error("Startup Error:", err);
-    setTimeout(startBot, 5000);
-  }
 }
 
-startBot();
+// ====== تشغيل السيرفر والبوت معاً لمنع التعليق ======
+const PORT = process.env.PORT || 3000;
+http.createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('Dante Bot is Online and Alive\n');
+}).listen(PORT, () => {
+    console.log(`Render Web Server bypass listening on port ${PORT}`);
+    startBot(); // البوت يشتغل فوراً بمجرد فتح المنفذ مباشرة!
+});
