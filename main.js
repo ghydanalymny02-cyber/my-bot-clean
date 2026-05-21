@@ -9,24 +9,11 @@ const fs = require("fs-extra");
 const pino = require("pino");
 const path = require("path");
 const chalk = require("chalk");
-const { exec } = require("child_process");
 const logger = require("./utils/console");
 
-// ====== ASCII BANNER ======
 console.clear();
-console.log(
-  chalk.redBright(`
-██████╗   █████╗  ███╗   ██╗ ████████╗ ███████╗
-██╔══██╗ ██╔══██╗ ████╗  ██║ ╚══██╔══╝ ██╔════╝
-██║  ██║ ███████║ ██╔██╗ ██║    ██║    █████╗  
-██║  ██║ ██╔══██║ ██║╚██╗██║    ██║    ██╔══╝  
-██████╔╝ ██║  ██║ ██║ ╚████║    ██║    ███████╗
-╚═════╝  ╚═╝  ╚═╝ ╚═╝  ╚═══╝    ╚═╝    ╚══════╝
-`)
-);
-console.log(chalk.red.bold("\nDante is now running on Render...\n"));
+console.log(chalk.red.bold("\n[!] Starting Dante Bot...\n"));
 
-// ====== MAIN START FUNCTION ======
 async function startBot() {
   try {
     const sessionPath = path.join(__dirname, "ملف_الاتصال");
@@ -38,70 +25,62 @@ async function startBot() {
     const sock = makeWASocket({
       version,
       auth: state,
-      browser: ["Render", "Chrome", "1.0.0"],
+      browser: ["Chrome", "Ubuntu", "3.0.0"],
       logger: pino({ level: "silent" }),
-      markOnlineOnConnect: true,
-      generateHighQualityLinkPreview: true,
       printQRInTerminal: false,
-      syncFullHistory: false,
     });
 
     // ====== AUTOMATED PAIRING SYSTEM ======
     if (!sock.authState.creds.registered) {
-      let phone = process.env.PAIRING_NUMBER || ""; 
-      phone = phone.replace(/\D/g, "");
+      setTimeout(async () => {
+        let phone = process.env.PAIRING_NUMBER || ""; 
+        phone = phone.replace(/\D/g, "");
 
-      if (!phone) {
-        logger.warn("⚠️ PAIRING_NUMBER not found in Environment. Please add it in Render Settings.");
-      } else {
+        if (!phone) {
+          logger.warn("⚠️ PAIRING_NUMBER missing in Env!");
+          return;
+        }
+
         try {
           logger.info("Requesting pairing code for: " + phone);
           const code = await sock.requestPairingCode(phone);
           console.log(
-            chalk.greenBright(
-              `\n───────────────\n✅ YOUR PAIRING CODE: ${code}\n───────────────\n`
-            )
+            chalk.greenBright(`\n───────────────────────────────\n✅ YOUR PAIRING CODE: ${code}\n───────────────────────────────\n`)
           );
         } catch (err) {
-          logger.error("Failed to get pairing code:", err.message);
+          logger.error("Failed to get code, retrying...");
+          setTimeout(startBot, 5000);
         }
-      }
+      }, 10000); 
     }
-
-    // ====== CONNECTION STATUS ======
+    // ====== CONNECTION HANDLER ======
     sock.ev.on("connection.update", async (update) => {
       const { connection, lastDisconnect } = update;
-
       if (connection === "connecting") logger.info("Connecting to WhatsApp...");
-
       if (connection === "open") {
-        logger.success(`✅ Connected as ${sock.user.id}`);
+        logger.success(`✅ Connected!`);
         require("./handlers/handler").handleMessagesLoader();
       }
-
       if (connection === "close") {
-        const reason = lastDisconnect?.error?.output?.statusCode === DisconnectReason.loggedOut;
-        logger.warn("Connection closed, reconnecting...");
-        if (!reason) setTimeout(startBot, 3000);
+        const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
+        if (shouldReconnect) {
+          logger.warn("Reconnecting...");
+          setTimeout(startBot, 5000);
+        }
       }
     });
 
-    // ====== MESSAGE HANDLER ======
     sock.ev.on("messages.upsert", async (m) => {
-      try {
-        const { handleMessages } = require("./handlers/handler");
-        await handleMessages(sock, m);
-      } catch (e) {
-        logger.error("Message error:", e);
-      }
+      const { handleMessages } = require("./handlers/handler");
+      await handleMessages(sock, m);
     });
 
     sock.ev.on("creds.update", saveCreds);
+
   } catch (err) {
     logger.error("Startup Error:", err);
-    setTimeout(startBot, 3000);
+    setTimeout(startBot, 5000);
   }
 }
 
-// ====== START ======
 startBot();
