@@ -61,15 +61,17 @@ async function startBot() {
     const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
     const { version } = await fetchLatestBaileysVersion();
 
+    // تعديل إعدادات الاتصال لتتوافق مع السيرفر وتتجنب حظر الواتساب
     const sock = makeWASocket({
       version,
       auth: state,
-      browser: ["MacOS", "Chrome", "1.0.0"],
+      browser: ["Ubuntu", "Chrome", "20.0.04"], // تم التعديل ليتناسب مع خوادم Render
       logger: pino({ level: "silent" }),
       markOnlineOnConnect: true,
       generateHighQualityLinkPreview: true,
       printQRInTerminal: false,
       syncFullHistory: false,
+      linkPreviewImageThumbnailWidth: 192,
     });
 
     // ====== Auto Group Data Cache ======
@@ -88,7 +90,6 @@ async function startBot() {
     if (!sock.authState.creds.registered) {
       console.log(chalk.yellow("\nSetup Required — Pairing Code Mode\n"));
       
-      // تم تثبيت رقمك هنا مباشرة لمنع توقف السيرفر على Render
       let phone = "967717579146"; 
       phone = phone.replace(/\D/g, "");
 
@@ -97,18 +98,22 @@ async function startBot() {
         return process.exit(1);
       }
 
-      try {
-        logger.info("Fetching pairing code...");
-        const code = await sock.requestPairingCode(phone);
-        console.log(
-          chalk.greenBright(
-            `\n───────────────\nPairing Code: ${code}\nPhone: ${phone}\n───────────────\n`
-          )
-        );
-      } catch (err) {
-        logger.error("Failed to get pairing code:", err.message);
-        sock.printQRInTerminal = true;
-      }
+      // إضافة مهلة بسيطة (Delay) قبل طلب الكود لضمان استقرار السيرفر
+      setTimeout(async () => {
+        try {
+          logger.info("Fetching pairing code...");
+          const code = await sock.requestPairingCode(phone);
+          console.log(
+            chalk.greenBright(
+              `\n───────────────\nPairing Code: ${code}\nPhone: ${phone}\n───────────────\n`
+            )
+          );
+        } catch (err) {
+          logger.error("Failed to get pairing code:", err.message);
+          // إذا فشل بالرقم، نخليه يطبع الـ QR كخيار بديل في اللوكس
+          sock.printQRInTerminal = true;
+        }
+      }, 3000); 
     }
 
     // ====== CONNECTION STATUS ======
@@ -133,7 +138,6 @@ async function startBot() {
           logger.warn("Elite registration failed:", e.message);
         }
 
-       // require("./handlers/handler").handleMessagesLoader();
         listenToConsole();
       }
 
@@ -148,8 +152,8 @@ async function startBot() {
           logger.error("Logged out — restarting not possible.");
           process.exit(1);
         } else {
-          logger.info("Reconnecting in 3s...");
-          setTimeout(startBot, 3000);
+          logger.info("Reconnecting in 5s...");
+          setTimeout(startBot, 5000); // زيادة وقت إعادة المحاولة لـ 5 ثوانٍ لتفادي الحظر
         }
       }
     });
@@ -170,7 +174,7 @@ async function startBot() {
   } catch (err) {
     logger.error("Startup Error:", err);
     playSound("ERROR.mp3");
-    setTimeout(startBot, 3000);
+    setTimeout(startBot, 5000);
   }
 }
 
