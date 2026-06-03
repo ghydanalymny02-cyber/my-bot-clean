@@ -1,4 +1,4 @@
-// *حقوق مطورة يوميلا 🛡*
+// *حقوق مطور مـــجـــهـــول  �لا يوميلا 🛡*
 // 📄 *حالة.js*
 
 module.exports = {
@@ -15,7 +15,7 @@ module.exports = {
       const randomState = states[Math.floor(Math.random() * states.length)];
 
       const infoText = `
-╭──〔 ❄ 𝒀𝑼𝑴𝑰𝑳𝑨 𝑩𝒐𝒕꧂ 〕──╮
+╭──〔 ❄ مـــجـــهـــول  𝑩𝒐𝒕꧂ 〕──╮
 ┃ 🌈 حالة ${target} اليوم:
 ┃ ✨ ${randomState}
 ╰━━━━━━━━━━━━━━╯
