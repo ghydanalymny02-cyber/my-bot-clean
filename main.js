@@ -11,7 +11,7 @@ const path = require("path");
 const chalk = require("chalk");
 const readline = require("readline");
 const { exec } = require("child_process");
-const http = require("http"); // تم إضافة مكتبة الـ HTTP المدمجة لتشغيل المنفذ
+const http = require("http"); // مكتبة مدمجة
 const logger = require("./utils/console");
 
 // ====== Fast Input ======
@@ -41,17 +41,6 @@ console.log(
 );
 console.log(chalk.red.bold("\nDante is now running...\n"));
 
-// ====== WEB SERVER FOR RENDER (PREVENT TIMEOUT) ======
-// هذا الجزء تم إضافته لفتح منفذ للسيرفر ليتخطى فحص الـ Deploy بنجاح
-const PORT = process.env.PORT || 3000;
-const server = http.createServer((req, res) => {
-  res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
-  res.end("Dante Bot Is Running Fully Online! 🚀");
-});
-server.listen(PORT, () => {
-  logger.info(`Render Web Port Opened Successfully On Port: ${PORT}`);
-});
-
 // ====== SOUND CONTROL ======
 function playSound(file) {
   const control = path.join(__dirname, "sounds", "sound.txt");
@@ -61,6 +50,9 @@ function playSound(file) {
   const soundPath = path.join(__dirname, "sounds", file);
   if (fs.existsSync(soundPath)) exec(`mpv --no-terminal "${soundPath}"`);
 }
+
+// متغير لتخزين السيرفر ومنع تكرار تشغيله عند إعادة الاتصال
+let webServer = null;
 
 // ====== MAIN START FUNCTION ======
 async function startBot() {
@@ -73,11 +65,11 @@ async function startBot() {
     const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
     const { version } = await fetchLatestBaileysVersion();
 
-    // تعديل إعدادات الاتصال لتتوافق مع السيرفر وتتجنب حظر الواتساب
+    // إعدادات الاتصال المتوافقة مع السيرفر
     const sock = makeWASocket({
       version,
       auth: state,
-      browser: ["Ubuntu", "Chrome", "20.0.04"], // تم التعديل ليتناسب مع خوادم Render
+      browser: ["Ubuntu", "Chrome", "20.0.04"], 
       logger: pino({ level: "silent" }),
       markOnlineOnConnect: true,
       generateHighQualityLinkPreview: true,
@@ -85,6 +77,24 @@ async function startBot() {
       syncFullHistory: false,
       linkPreviewImageThumbnailWidth: 192,
     });
+
+    // ====== تشغيل خادم الويب فور بدء البوت لمنع الـ Timeout ======
+    const PORT = process.env.PORT || 3000;
+    if (!webServer) {
+      webServer = http.createServer((req, res) => {
+        res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
+        res.end("Dante Bot Is Online! 🚀");
+      });
+      
+      webServer.listen(PORT, () => {
+        logger.info(`[Render] Web Port opened successfully on port: ${PORT}`);
+      });
+      
+      // التعامل مع أخطاء السيرفر لمنع توقف البوت
+      webServer.on('error', (err) => {
+        logger.warn(`Web server error: ${err.message}`);
+      });
+    }
 
     // ====== Auto Group Data Cache ======
     sock.ev.on("groups.upsert", async (groups) => {
@@ -110,7 +120,7 @@ async function startBot() {
         return process.exit(1);
       }
 
-      // إضافة مهلة بسيطة (Delay) قبل طلب الكود لضمان استقرار السيرفر
+      // طلب الكود بعد التأكد من استقرار السيرفر
       setTimeout(async () => {
         try {
           logger.info("Fetching pairing code...");
@@ -122,10 +132,9 @@ async function startBot() {
           );
         } catch (err) {
           logger.error("Failed to get pairing code:", err.message);
-          // إذا فشل بالرقم، نخليه يطبع الـ QR كخيار بديل في اللوكس
           sock.printQRInTerminal = true;
         }
-      }, 3000); 
+      }, 4000); // زيادة المهلة قليلاً لضمان جاهزية المقبس
     }
 
     // ====== CONNECTION STATUS ======
@@ -164,8 +173,8 @@ async function startBot() {
           logger.error("Logged out — restarting not possible.");
           process.exit(1);
         } else {
-          logger.info("Reconnecting in 5s...");
-          setTimeout(startBot, 5000); // زيادة وقت إعادة المحاولة لـ 5 ثوانٍ لتفادي الحظر
+          logger.info("Reconnecting in 7s...");
+          setTimeout(startBot, 7000); // مهلة أمان مريحة لإعادة الاتصال
         }
       }
     });
@@ -186,7 +195,7 @@ async function startBot() {
   } catch (err) {
     logger.error("Startup Error:", err);
     playSound("ERROR.mp3");
-    setTimeout(startBot, 5000);
+    setTimeout(startBot, 7000);
   }
 }
 
