@@ -29,7 +29,7 @@ module.exports = {
       try {
         profilePicture = await sock.profilePictureUrl(groupId, 'image');
       } catch {
-        profilePicture = 'https://i.imgur.com/0ZbYhpZ.png'; // صورة افتراضية
+        profilePicture = 'resources/logo.jpg'; // صورة افتراضية
       }
 
       const caption = `
@@ -39,7 +39,7 @@ module.exports = {
 🛡️ *عدد المشرفين:* ${totalAdmins}
 🧑‍💼 *المنشئ:* ${groupOwner}
 📅 *تاريخ الإنشاء:* ${creationDate}
-      `.trim();
+❄ مــجــهــول||𝕲𝕳𝕰𝕯𝕬𝕹 𝑩𝒐𝒕꧂`.trim();
 
       await sock.sendMessage(groupId, {
         image: { url: profilePicture },
