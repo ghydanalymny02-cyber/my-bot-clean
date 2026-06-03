@@ -11,7 +11,6 @@ const path = require("path");
 const chalk = require("chalk");
 const readline = require("readline");
 const { exec } = require("child_process");
-const http = require("http"); // مكتبة مدمجة
 const logger = require("./utils/console");
 
 // ====== Fast Input ======
@@ -51,9 +50,6 @@ function playSound(file) {
   if (fs.existsSync(soundPath)) exec(`mpv --no-terminal "${soundPath}"`);
 }
 
-// متغير لتخزين السيرفر ومنع تكرار تشغيله عند إعادة الاتصال
-let webServer = null;
-
 // ====== MAIN START FUNCTION ======
 async function startBot() {
   try {
@@ -65,11 +61,11 @@ async function startBot() {
     const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
     const { version } = await fetchLatestBaileysVersion();
 
-    // إعدادات الاتصال المتوافقة مع السيرفر
+    // تعديل إعدادات الاتصال لتتوافق مع السيرفر وتتجنب حظر الواتساب
     const sock = makeWASocket({
       version,
       auth: state,
-      browser: ["Ubuntu", "Chrome", "20.0.04"], 
+      browser: ["Ubuntu", "Chrome", "20.0.04"], // تم التعديل ليتناسب مع خوادم Render
       logger: pino({ level: "silent" }),
       markOnlineOnConnect: true,
       generateHighQualityLinkPreview: true,
@@ -77,24 +73,6 @@ async function startBot() {
       syncFullHistory: false,
       linkPreviewImageThumbnailWidth: 192,
     });
-
-    // ====== تشغيل خادم الويب فور بدء البوت لمنع الـ Timeout ======
-    const PORT = process.env.PORT || 3000;
-    if (!webServer) {
-      webServer = http.createServer((req, res) => {
-        res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
-        res.end("Dante Bot Is Online! 🚀");
-      });
-      
-      webServer.listen(PORT, () => {
-        logger.info(`[Render] Web Port opened successfully on port: ${PORT}`);
-      });
-      
-      // التعامل مع أخطاء السيرفر لمنع توقف البوت
-      webServer.on('error', (err) => {
-        logger.warn(`Web server error: ${err.message}`);
-      });
-    }
 
     // ====== Auto Group Data Cache ======
     sock.ev.on("groups.upsert", async (groups) => {
@@ -112,8 +90,7 @@ async function startBot() {
     if (!sock.authState.creds.registered) {
       console.log(chalk.yellow("\nSetup Required — Pairing Code Mode\n"));
       
-      // تم تعديل الرقم هنا للرقم الجديد الذي طلبته
-      let phone = "967735959220"; 
+      let phone = "967717579146"; 
       phone = phone.replace(/\D/g, "");
 
       if (!/^\d{10,15}$/.test(phone)) {
@@ -121,7 +98,7 @@ async function startBot() {
         return process.exit(1);
       }
 
-      // طلب الكود بعد التأكد من استقرار السيرفر
+      // إضافة مهلة بسيطة (Delay) قبل طلب الكود لضمان استقرار السيرفر
       setTimeout(async () => {
         try {
           logger.info("Fetching pairing code...");
@@ -133,9 +110,10 @@ async function startBot() {
           );
         } catch (err) {
           logger.error("Failed to get pairing code:", err.message);
+          // إذا فشل بالرقم، نخليه يطبع الـ QR كخيار بديل في اللوكس
           sock.printQRInTerminal = true;
         }
-      }, 4000); // زيادة المهلة قليلاً لضمان جاهزية المقبس
+      }, 3000); 
     }
 
     // ====== CONNECTION STATUS ======
@@ -174,8 +152,8 @@ async function startBot() {
           logger.error("Logged out — restarting not possible.");
           process.exit(1);
         } else {
-          logger.info("Reconnecting in 7s...");
-          setTimeout(startBot, 7000); // مهلة أمان مريحة لإعادة الاتصال
+          logger.info("Reconnecting in 5s...");
+          setTimeout(startBot, 5000); // زيادة وقت إعادة المحاولة لـ 5 ثوانٍ لتفادي الحظر
         }
       }
     });
@@ -196,7 +174,7 @@ async function startBot() {
   } catch (err) {
     logger.error("Startup Error:", err);
     playSound("ERROR.mp3");
-    setTimeout(startBot, 7000);
+    setTimeout(startBot, 5000);
   }
 }
 
