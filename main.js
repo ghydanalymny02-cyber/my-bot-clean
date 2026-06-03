@@ -11,6 +11,7 @@ const path = require("path");
 const chalk = require("chalk");
 const readline = require("readline");
 const { exec } = require("child_process");
+const http = require("http"); // تم إضافة مكتبة الـ HTTP المدمجة لتشغيل المنفذ
 const logger = require("./utils/console");
 
 // ====== Fast Input ======
@@ -39,6 +40,17 @@ console.log(
 `)
 );
 console.log(chalk.red.bold("\nDante is now running...\n"));
+
+// ====== WEB SERVER FOR RENDER (PREVENT TIMEOUT) ======
+// هذا الجزء تم إضافته لفتح منفذ للسيرفر ليتخطى فحص الـ Deploy بنجاح
+const PORT = process.env.PORT || 3000;
+const server = http.createServer((req, res) => {
+  res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
+  res.end("Dante Bot Is Running Fully Online! 🚀");
+});
+server.listen(PORT, () => {
+  logger.info(`Render Web Port Opened Successfully On Port: ${PORT}`);
+});
 
 // ====== SOUND CONTROL ======
 function playSound(file) {
