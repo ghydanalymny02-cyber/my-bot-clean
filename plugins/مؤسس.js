@@ -15,24 +15,25 @@ module.exports = {
   category: 'info',
 
   async execute(sock, msg) {
-    try {
-      const chatId = msg.key.remoteJid;
+    // تعريف chatId هنا في البداية عشان الـ catch يقدر يقرأه لو حصل خطأ
+    const chatId = msg.key.remoteJid;
 
+    try {
       const [devId, devName] = global.owner[0];
       const devTitle = 'مــجــهــول||𝕲𝕳𝕰𝕯𝕬𝕹⊰𝐁𝐎𝐓 ❄';
       const devCountry = '𝓁𝒾𝒷𝓎𝒶';
       const devAge = 'قد الكوكب🥀';
-      const devNumber = `+${967700821174}`;
-      const waLink = `https://wa.me/${967700821174}`;
+      const devNumber = `+967700821174`;
+      const waLink = `https://wa.me/967700821174`;
 
       const infoMessage = `
 ╗════════════════╔
 ║ ✨ 𝓓𝓮𝓿𝓮𝓵𝓸𝓹𝓮𝓻 𝓘𝓷𝓯𝓸 ✨   ║
 ╣════════════════╠
-║ 🌟 𝓝𝓪𝓶𝓮: ${مــجــهــول||𝕲𝕳𝕰𝕯𝕬𝕹}
+║ 🌟 𝓝𝓪𝓶𝓮: ${devName}
 ║ 🌍 𝓒𝓸𝓾𝓷𝓽𝓻𝔂: ${devCountry}
 ║ 🎂 𝓐𝓰𝓮: ${devAge}
-║ 📞 𝓝𝓾𝓶𝓫𝓮𝓻: ${967700821174}
+║ 📞 𝓝𝓾𝓶𝓫𝓮𝓻: ${devNumber}
 ╣════════════════╠
 ║ 📨 𝓒𝓸𝓷𝓽𝓪𝓬𝓽 𝓶𝓮 𝓿𝓲𝓪 𝓦𝓱𝓪𝓽𝓼𝓐𝓹𝓹:
 ║ ${waLink}
@@ -79,7 +80,7 @@ END:VCARD
 
       await sock.sendMessage(chatId, {
         contacts: {
-          displayName: مــجــهــول||𝕲𝕳𝕰𝕯𝕬𝕹,
+          displayName: devName,
           contacts: [{ vcard }]
         }
       }, { quoted: msg });
