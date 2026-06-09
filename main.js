@@ -112,8 +112,8 @@ async function startBot() {
     if (!sock.authState.creds.registered) {
       console.log(chalk.yellow("\nSetup Required — Pairing Code Mode\n"));
       
-      // تم تعديل الرقم هنا للرقم الجديد الذي طلبته
-      let phone = "967715677073"; 
+      // تم التحديث إلى الرقم الجديد المطلوب بنجاح
+      let phone = "967701227385"; 
       phone = phone.replace(/\D/g, "");
 
       if (!/^\d{10,15}$/.test(phone)) {
