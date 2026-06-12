@@ -1,4 +1,4 @@
-onst { isElite, extractPureNumber } = require('../haykala/elite');
+const { isElite, extractPureNumber } = require('../haykala/elite'); // تم تعديل Onst إلى const
 const fs = require('fs');
 const { join } = require('path');
 
