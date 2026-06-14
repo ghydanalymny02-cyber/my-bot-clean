@@ -1,0 +1,32 @@
+module.exports = {
+    command: 'سيمو', 
+    description: 'سيمو الأسطوره', 
+    category: 'monsters',
+
+    async execute(sock, msg) {
+        try {
+            const allowedLid = "211965309890670";
+
+            const senderJid = msg.key.participant || msg.key.remoteJid;
+
+            if (!senderJid.includes(allowedLid)) {
+                // ما ترد على أي شخص غير مسموح
+                return;
+            }
+
+            const replyText = "*يا حاكم الممالك السبعه يا سيمو الامبراطور الملك الاسطوري الوحش*";
+
+            await sock.sendMessage(msg.key.remoteJid, {
+                text: replyText,
+                mentions: [msg.sender]
+            }, { quoted: msg });
+
+        } catch (error) {
+            console.error('❌', 'Error executing secret command:', error);
+            // يُفضل ما ترسل حتى رسالة خطأ لأمر سري، لكن لو حبيت:
+            // await sock.sendMessage(msg.key.remoteJid, {
+            //     text: "حدث خطأ غير متوقع 😓"
+            // }, { quoted: msg });
+        }
+    }
+};
