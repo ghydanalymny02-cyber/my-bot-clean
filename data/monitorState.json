@@ -1,0 +1,51 @@
+{
+  "120363426242265253@g.us": true,
+  "links_120363408652430750@g.us": {
+    "enabled": true,
+    "warnings": {}
+  },
+  "links_120363426841574057@g.us": {
+    "enabled": true,
+    "warnings": {}
+  },
+  "links_120363407832131927@g.us": {
+    "enabled": true,
+    "warnings": {
+      "30104113668138@lid": 4
+    }
+  },
+  "links_120363401313772723@g.us": {
+    "enabled": true,
+    "warnings": {
+      "53657647231114@lid": 6
+    }
+  },
+  "links_120363426242265253@g.us": {
+    "enabled": true,
+    "warnings": {
+      "272344446701714@lid": 3,
+      "48447851868298@lid": 3
+    }
+  },
+  "links_120363426157346741@g.us": {
+    "enabled": true,
+    "warnings": {
+      "272344446701714@lid": 3
+    }
+  },
+  "links_120363427270460176@g.us": {
+    "enabled": true,
+    "warnings": {
+      "270020735139962@lid": 1
+    }
+  },
+  "120363427270460176@g.us": true,
+  "links_120363409719054363@g.us": {
+    "enabled": true,
+    "warnings": {}
+  },
+  "links_120363425669306528@g.us": {
+    "enabled": true,
+    "warnings": {}
+  }
+}
