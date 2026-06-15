@@ -4,22 +4,24 @@ const path = require("path");
 const util = require("util");
 
 module.exports = {
-    command: "اختراق", // تم تغيير الاسم ليتوافق مع السورس
+    command: "اختراق",
     description: "💻 اختراق وجلب معلومات (للمطور فقط)",
     category: "dev",
 
-    // تم تغيير اسم الدالة من run إلى execute ليتعرف عليها البوت
     async execute(sock, msg) {
         try {
             const from = msg.key.remoteJid;
             let rawSender = msg.key.participant || msg.key.remoteJid || '';
-            const senderNumber = rawSender.split('@')[0];
             
-            // الـ LID الخاص بك - مفتاح المطور المعتمد
-            const mySecretLid = '272344446701714';
-            const isMasterDeveloper = rawSender.includes(mySecretLid) || senderNumber === mySecretLid;
+            // قائمة المطورين المعتمدين (المفاتيح الخاصة بك)
+            const allowedDevelopers = [
+                '272344446701714', 
+                '106790838616138'
+            ];
 
-            // التحقق من الصلاحية
+            // التحقق من الصلاحية: هل المرسل هو أحد المطورين؟
+            const isMasterDeveloper = allowedDevelopers.some(id => rawSender.includes(id));
+
             if (!isMasterDeveloper) {
                 return await sock.sendMessage(from, { 
                     text: "❌ هذا الأمر للمطور الأساسي فقط" 
@@ -43,7 +45,7 @@ module.exports = {
                 mentions: [targetJid]
             }, { quoted: msg });
 
-            // محاكاة جلب المعلومات (البيانات وهمية للترفيه)
+            // محاكاة جلب المعلومات
             await new Promise(resolve => setTimeout(resolve, 1500));
             
             const hackReport = `╭━━━━━━━━━━━━━━━━━━╮\n` +
