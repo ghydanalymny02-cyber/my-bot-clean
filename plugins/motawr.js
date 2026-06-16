@@ -3,7 +3,7 @@ const { join } = require('path');
 
 // ✅ تعريف بيانات المطور (داخل الملف فقط)
 global.owner = [
-  ['967700821174', 'مــجــهــول||𝕲𝕳𝕰𝕯𝕬𝕹', true],
+  ['967715677073', 'مــجــهــول||𝕲𝕳𝕰𝕯𝕬𝕹', true],
 ];
 
 module.exports = {
@@ -28,13 +28,13 @@ module.exports = {
       // الرسالة النصية
       const infoMessage = `
 ┏━━━━━━ ⬣
-┃ ❄ *معلومات يوميلا ملكة ظل* ❄
+┃ ❄ *معلومات مـــجـــهـــول ملك الظل* ❄
 ┃ 
 ┃ ✯ الاسم: ${devTitle}
-┃ ✯ اللقب: *❄ 𝒀𝑼𝑴𝑰𝑳𝑨*
+┃ ✯ اللقب: *❄ يوتا*
 ┃ ✯ الدولة: ${devCountry}
 ┃ ✯ العمر: ${devAge}
-┃ ✯ الرقم: 967 700 821 174
+┃ ✯ الرقم: 967 715 677 073
 ┗━━━━━━ ⬣
 📌 للتواصل عبر واتساب:
 967 700 821 174
@@ -57,14 +57,14 @@ module.exports = {
         await sock.sendMessage(chatId, {
           video: videoBuffer,
           caption: infoMessage,
-          footer: '❄ 𝒀𝑼𝑴𝑰𝑳𝑨 ',
+          footer: '❄ مـــجـــهـــول ',
           buttons: buttons,
           headerType: 5
         }, { quoted: msg });
       } else {
         await sock.sendMessage(chatId, {
           text: infoMessage,
-          footer: '❄ 𝒀𝑼𝑴𝑰𝑳𝑨 ',
+          footer: '❄ مـــجـــهـــول ',
           buttons: buttons,
           headerType: 1
         }, { quoted: msg });
