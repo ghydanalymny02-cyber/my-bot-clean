@@ -33,7 +33,7 @@ module.exports = {
 
     // إرسال صورة مع رسالة وداع
     const imageUrl = 'https://i.pinimg.com/736x/2f/c1/fc/2fc1fc7bea93f5b93a5d0d817a2bc7c8.jpg';
-    const farewellMessage = '  ❄ مـــجـــهـــول 𝑩𝒐𝒕꧂ｼعمكم خرجت  🫦 ';
+    const farewellMessage = '  ❄ مـــجـــهـــول 𝑩𝒐𝒕꧂عمكم خرج  🫦 ';
 
     await sock.sendMessage(jid, {
       image: { url: imageUrl },
