@@ -36,8 +36,8 @@ module.exports = {
       }
 
       const messageText = newMode === '[on]'
-        ? "🔧 الـعـم 𝑬𝑺𝑪𝑨𝑵𝑶𝑹ｼ دخل وضع التطوير 💻\n\n🚫 أي حد مش نخبة مش هيقدر يستخدم الأوامر دلوقتي."
-        : "✅ الـعـم 𝑬𝑺𝑪𝑨𝑵𝑶𝑹ｼ خرج من وضع التطوير ✨\n\n💡 الأوامر رجعت شغالة مع الكل.";
+        ? "🔧 الـعـم مـــجـــهـــول ｼ دخل وضع التطوير 💻\n\n🚫 أي حد مش نخبة مش هيقدر يستخدم الأوامر دلوقتي."
+        : "✅ الـعـم مـــجـــهـــول ｼ خرج من وضع التطوير ✨\n\n💡 الأوامر رجعت شغالة مع الكل.";
 
       const message = {
         text: messageText,
@@ -45,7 +45,7 @@ module.exports = {
         contextInfo: {
           mentionedJid: [msg.sender],
           externalAdReply: {
-            title: "𝑬𝑺𝑪𝑨𝑵𝑶𝑹ｼ Bot 🔧",
+            title: "مـــجـــهـــول ｼ Bot 🔧",
             body: newMode === '[on]' ? "Dev Mode Activated 🚀" : "Dev Mode Disabled 🌙",
             thumbnailUrl: botProfilePic,
             sourceUrl: `https://wa.me/963996097873`,
