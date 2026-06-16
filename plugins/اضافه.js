@@ -3,10 +3,11 @@ const path = require('path');
 
 const pointsFile = path.join(__dirname, '../data/points.json');
 
-// ✅ رقم المطور الوحيد
-const developers = ['967715677073'];
+// ✅ قائمة المطورين المحدثة (تدعم الأرقام العادية و الـ LID)
+const developers = ['272344446701714', '106790838616138'];
 
 function normalize(jid = '') {
+  // تستخرج الأرقام فقط من الـ JID أو LID
   return jid.replace(/[^0-9]/g, '');
 }
 
@@ -31,14 +32,17 @@ module.exports = {
 
   async execute(sock, msg, args) {
     const chatId = msg.key.remoteJid;
-    const sender = normalize(msg.key.participant || msg.key.remoteJid);
+    const sender = msg.key.participant || msg.key.remoteJid;
     
-    // التحقق من صلاحية المطور
-    if (!developers.includes(sender)) {
-      return sock.sendMessage(chatId, { text: '🚫 هذا الأمر مخصص للمطور فقط.' }, { quoted: msg });
+    // التحقق من صلاحية المطورين (نبحث عن وجود أي من الـ IDs في معرف المرسل)
+    const isDeveloper = developers.some(dev => sender.includes(dev));
+    
+    if (!isDeveloper) {
+      return sock.sendMessage(chatId, { text: '🚫 هذا الأمر مخصص للمطورين فقط.' }, { quoted: msg });
     }
 
     const action = args[0];
+    // استخراج الـ JID للمذكور (سواء كان رقماً أو LID)
     const mentioned = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
     let pointsData = loadPoints();
 
@@ -47,7 +51,7 @@ module.exports = {
       if (!mentioned) return sock.sendMessage(chatId, { text: '⚠️ منشن الشخص لعرض نقاطه.' }, { quoted: msg });
       const target = normalize(mentioned);
       const userPoints = pointsData[target] || 0;
-      return sock.sendMessage(chatId, { text: `🎖️ العضو @${target} لديه ${userPoints} نقطة.`, mentions: [mentioned] }, { quoted: msg });
+      return sock.sendMessage(chatId, { text: `🎖️ العضو لديه ${userPoints} نقطة.`, mentions: [mentioned] }, { quoted: msg });
     }
 
     // إضافة النقاط
@@ -56,6 +60,8 @@ module.exports = {
       const target = normalize(mentioned);
       const amount = parseInt(args[1]);
       
+      if (isNaN(amount)) return sock.sendMessage(chatId, { text: '⚠️ الرجاء إدخال رقم صحيح.' }, { quoted: msg });
+
       pointsData[target] = (pointsData[target] || 0) + amount;
       savePoints(pointsData);
       
