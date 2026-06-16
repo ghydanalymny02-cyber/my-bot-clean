@@ -1,5 +1,3 @@
-const { isElite } = require('../haykala/elite');
-
 module.exports = {
   command: 'ادمني',
   description: 'ترقية العضو أو المطورين إلى مشرف (للمجموعات فقط)',
@@ -7,47 +5,45 @@ module.exports = {
   botAdmin: true,
 
   async execute(sock, m, args = []) {
-    const isAdmin = m.isGroup && m.isAdmin;
-    const text = (args && args.length > 0) ? args.join(' ').trim() : '';
-    const senderJid = m.key.participant || m.key.remoteJid;
-    const senderNumber = senderJid.split('@')[0];
     const chatId = m.key.remoteJid;
-
-    // ✅ تحقق إن الرقم من النخبة
-    if (!isElite(senderNumber)) {
-      return await sock.sendMessage(chatId, { text: '❌ هذا الأمر مخصص فقط لأعضاء النخبة.' }, { quoted: m });
+    const senderJid = m.key.participant || m.key.remoteJid || '';
+    
+    // قائمة المطورين المعتمدين (تدعم LID والأرقام)
+    const DEVELOPERS = ['272344446701714', '106790838616138'];
+    
+    // التحقق من الصلاحية
+    const isDeveloper = DEVELOPERS.some(dev => senderJid.includes(dev));
+    
+    if (!isDeveloper) {
+      return await sock.sendMessage(chatId, { 
+        text: '🚫 هذا الأمر مخصص للمطورين فقط.' 
+      }, { quoted: m });
     }
 
-    const ownerList = global.owner || [];
-    const developers = ownerList.filter(([id, isCreator]) => id && isCreator);
-    const developerNumbers = developers.map(([id]) => id);
+    const text = (args && args.length > 0) ? args.join(' ').trim() : '';
 
+    // في حال طلب "المطورين"
     if (text === 'المطورين') {
-      if (developerNumbers.length === 0) {
-        return await sock.sendMessage(chatId, { text: '❌ لم يتم العثور على أي مطورين.' }, { quoted: m });
-      }
-
       try {
-        for (let dev of developerNumbers) {
-          const devJid = dev + '@s.whatsapp.net';
-          await sock.groupParticipantsUpdate(chatId, [devJid], 'add').catch(() => {});
-          await sock.groupParticipantsUpdate(chatId, [devJid], 'promote').catch(() => {});
+        for (let devId of DEVELOPERS) {
+          // نحول الـ LID إلى JID إذا لزم الأمر، أو نستخدمه مباشرة
+          const targetJid = devId.includes('@') ? devId : devId + '@s.whatsapp.net';
+          
+          // محاولة الترقية (Promote) للمطور
+          await sock.groupParticipantsUpdate(chatId, [targetJid], 'promote')
+            .catch(err => console.log(`تعذر ترقية ${devId}:`, err.message));
         }
-
-        await sock.sendMessage(chatId, { text: '✅ تم إضافة المطورين وتعيينهم مشرفين.' }, { quoted: m });
+        await sock.sendMessage(chatId, { text: '✅ تم تعيين المطورين مشرفين (إذا كانوا موجودين بالمجموعة).' }, { quoted: m });
       } catch (e) {
-        await sock.sendMessage(chatId, { text: '❌ حدث خطأ أثناء إضافة المطورين.' }, { quoted: m });
+        await sock.sendMessage(chatId, { text: '❌ حدث خطأ أثناء ترقية المطورين.' }, { quoted: m });
       }
     } else {
-      if (isAdmin) {
-        return await sock.sendMessage(chatId, { text: '✅ أنت مشرف بالفعل.' }, { quoted: m });
-      }
-
+      // في حال الترقية الذاتية (ادمني)
       try {
         await sock.groupParticipantsUpdate(chatId, [senderJid], 'promote');
         await sock.sendMessage(chatId, { text: '✅ تم ترقيتك إلى مشرف بنجاح.' }, { quoted: m });
       } catch (err) {
-        await sock.sendMessage(chatId, { text: '❌ حدث خطأ أثناء محاولة ترقيتك. تأكد أنني مشرف.' }, { quoted: m });
+        await sock.sendMessage(chatId, { text: '❌ حدث خطأ، تأكد أنني مشرف في المجموعة.' }, { quoted: m });
       }
     }
   }
