@@ -1,30 +1,35 @@
 module.exports = {
   command: 'اصلاح',
-  description: 'إصلاح الأخطاء (للمطور الفعلي فقط)',
+  description: 'إصلاح الأخطاء (للمطورين فقط)',
   category: 'المطور',
   
   async execute(sock, msg, args) {
     try {
-      // هنا قفلنا البوت على الـ ID الفعلي والخاص بحسابك أنت بس!
-      const mySecretLid = '272344446701714';
+      // قائمة المطورين المعتمدين
+      const DEVELOPER_LIDS = ['106790838616138', '272344446701714'];
       
       // جلب معرف المرسل من الرسالة
-      let senderId = msg.key.participant || msg.key.remoteJid || '';
+      const senderId = msg.key.participant || msg.key.remoteJid || '';
       
-      // التحقق الصارم والمباشر
-      if (!senderId.includes(mySecretLid)) {
+      // التحقق: هل معرف المرسل يحتوي على أحد الـ LID الموجودة في القائمة؟
+      const isAuthorized = DEVELOPER_LIDS.some(lid => senderId.includes(lid));
+      
+      if (!isAuthorized) {
         return await sock.sendMessage(msg.key.remoteJid, {
-          text: '🚫 هذا الأمر مخصص فقط لمطور البوت الأساسي.'
+          text: '🚫 هذا الأمر مخصص فقط لمطوري البوت الأساسيين.'
         }, { quoted: msg });
       }
       
-      // إذا كنت أنت يكمل الكود هنا فوراً
+      // إذا كان المرسل أحد المطورين المعتمدين، يتم تنفيذ الأمر
       await sock.sendMessage(msg.key.remoteJid, {
         text: '🔧 أهلاً بك يا مطوري المعتمد! جاري فحص وإصلاح الأخطاء في نظام البوت الآن...'
       }, { quoted: msg });
       
+      // يمكنك هنا إضافة كود إعادة تشغيل البوت أو تنفيذ أوامر الإصلاح الفعلية
+      
     } catch(err) {
       console.error("❌ خطأ داخل أمر الإصلاح:", err);
+      await sock.sendMessage(msg.key.remoteJid, { text: '⚠️ حدث خطأ أثناء محاولة تنفيذ أمر الإصلاح.' });
     }
   }
 };
