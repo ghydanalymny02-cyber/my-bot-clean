@@ -1,12 +1,15 @@
 import fs from 'fs';
 import path from 'path';
-import { isElite, extractPureNumber } from '../haykala/elite.js';
+import { extractPureNumber } from '../haykala/elite.js';
 
 export const command = 'حظر';
 export const description = 'يمنع مستخدم من استخدام البوت نهائيًا';
 export const category = 'إدارة';
 
 const dbPath = path.join(process.cwd(), 'database', 'blockedUsers.json');
+
+// قائمة المطورين المعتمدين (يدعم الأرقام ومعرفات LID)
+const DEVELOPERS = ['272344446701714', '106790838616138'];
 
 function loadBlockedUsers() {
   if (!fs.existsSync(dbPath)) return [];
@@ -18,16 +21,19 @@ function saveBlockedUsers(data) {
 }
 
 export async function execute(sock, m, args) {
-  const sender = m.key.participant || m.key.remoteJid;
-  const pureSender = extractPureNumber(sender);
+  const senderJid = m.key.participant || m.key.remoteJid || '';
+  
+  // التحقق من أن المرسل هو أحد المطورين المحددين
+  const isDeveloper = DEVELOPERS.some(dev => senderJid.includes(dev));
 
-  if (!isElite(pureSender)) {
+  if (!isDeveloper) {
     return await sock.sendMessage(m.key.remoteJid, {
-      text: '❌ الأمر ده للنخبة بس.'
+      text: '🚫 هذا الأمر مخصص للمطورين فقط.'
     }, { quoted: m });
   }
 
-  const mentionedJid = m.message?.extendedTextMessage?.contextInfo?.participant;
+  // استخراج الشخص المستهدف للحظر
+  const mentionedJid = m.message?.extendedTextMessage?.contextInfo?.participant || m.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
   const replyTarget = extractPureNumber(mentionedJid || args[0]);
 
   if (!replyTarget) {
