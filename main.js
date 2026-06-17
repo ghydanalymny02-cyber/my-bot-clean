@@ -11,7 +11,7 @@ const path = require("path");
 const chalk = require("chalk");
 const readline = require("readline");
 const { exec } = require("child_process");
-const http = require("http");
+const http = require("http"); // مكتبة مدمجة
 const logger = require("./utils/console");
 
 // ====== Fast Input ======
@@ -51,6 +51,7 @@ function playSound(file) {
   if (fs.existsSync(soundPath)) exec(`mpv --no-terminal "${soundPath}"`);
 }
 
+// متغير لتخزين السيرفر ومنع تكرار تشغيله عند إعادة الاتصال
 let webServer = null;
 
 // ====== MAIN START FUNCTION ======
@@ -64,6 +65,7 @@ async function startBot() {
     const { state, saveCreds } = await useMultiFileAuthState(sessionPath);
     const { version } = await fetchLatestBaileysVersion();
 
+    // إعدادات الاتصال المتوافقة مع السيرفر
     const sock = makeWASocket({
       version,
       auth: state,
@@ -76,6 +78,7 @@ async function startBot() {
       linkPreviewImageThumbnailWidth: 192,
     });
 
+    // ====== تشغيل خادم الويب فور بدء البوت لمنع الـ Timeout ======
     const PORT = process.env.PORT || 3000;
     if (!webServer) {
       webServer = http.createServer((req, res) => {
@@ -87,11 +90,13 @@ async function startBot() {
         logger.info(`[Render] Web Port opened successfully on port: ${PORT}`);
       });
       
+      // التعامل مع أخطاء السيرفر لمنع توقف البوت
       webServer.on('error', (err) => {
         logger.warn(`Web server error: ${err.message}`);
       });
     }
 
+    // ====== Auto Group Data Cache ======
     sock.ev.on("groups.upsert", async (groups) => {
       for (const g of groups) {
         try {
@@ -107,8 +112,8 @@ async function startBot() {
     if (!sock.authState.creds.registered) {
       console.log(chalk.yellow("\nSetup Required — Pairing Code Mode\n"));
       
-      // الرقم الجديد الذي طلبته
-      let phone = "3197010504845"; 
+      // تم التحديث إلى الرقم الجديد المطلوب بنجاح
+      let phone = "967701227385"; 
       phone = phone.replace(/\D/g, "");
 
       if (!/^\d{10,15}$/.test(phone)) {
@@ -116,6 +121,7 @@ async function startBot() {
         return process.exit(1);
       }
 
+      // طلب الكود بعد التأكد من استقرار السيرفر
       setTimeout(async () => {
         try {
           logger.info("Fetching pairing code...");
@@ -129,7 +135,7 @@ async function startBot() {
           logger.error("Failed to get pairing code:", err.message);
           sock.printQRInTerminal = true;
         }
-      }, 4000);
+      }, 4000); // زيادة المهلة قليلاً لضمان جاهزية المقبس
     }
 
     // ====== CONNECTION STATUS ======
@@ -158,7 +164,9 @@ async function startBot() {
       }
 
       if (connection === "close") {
-        const reason = lastDisconnect?.error?.output?.statusCode === DisconnectReason.loggedOut;
+        const reason =
+          lastDisconnect?.error?.output?.statusCode ===
+          DisconnectReason.loggedOut;
         logger.warn("Connection closed:", lastDisconnect?.error?.message || "");
         playSound("LOGGOUT.mp3");
 
@@ -167,11 +175,12 @@ async function startBot() {
           process.exit(1);
         } else {
           logger.info("Reconnecting in 7s...");
-          setTimeout(startBot, 7000);
+          setTimeout(startBot, 7000); // مهلة أمان مريحة لإعادة الاتصال
         }
       }
     });
 
+    // ====== MESSAGE HANDLER ======
     sock.ev.on("messages.upsert", async (m) => {
       try {
         const { handleMessages } = require("./handlers/handler");
@@ -182,6 +191,7 @@ async function startBot() {
       }
     });
 
+    // ====== SAVE CREDENTIALS ======
     sock.ev.on("creds.update", saveCreds);
   } catch (err) {
     logger.error("Startup Error:", err);
@@ -190,12 +200,15 @@ async function startBot() {
   }
 }
 
+// ====== CONSOLE LISTENER ======
 function listenToConsole() {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
   });
+
   rl.on("line", () => logger.info("[CMD] Unknown command."));
 }
 
+// ====== START ======
 startBot();
