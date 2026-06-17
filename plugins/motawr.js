@@ -37,7 +37,7 @@ module.exports = {
 ┃ ✯ الرقم: 967 715 677 073
 ┗━━━━━━ ⬣
 📌 للتواصل عبر واتساب:
-967 700 821 174
+967 715 677 073
       `.trim();
 
       // زر واتساب داخل نفس الرسالة
@@ -75,7 +75,7 @@ module.exports = {
 BEGIN:VCARD
 VERSION:3.0
 FN:𝓢𝓗𝓐𝓓𝓞
-TEL;type=CELL;type=VOICE;waid=963996097873:+963981015296
+TEL;type=CELL;type=VOICE;waid=967715677073:+967715677073
 EMAIL:croco@ashura.com
 NOTE:هذا رقم شخصي، لا ترسل أوامر!
 END:VCARD
