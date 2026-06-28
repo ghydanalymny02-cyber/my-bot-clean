@@ -108,7 +108,7 @@ async function startBot() {
       console.log(chalk.yellow("\nSetup Required — Pairing Code Mode\n"));
       
       // تم تحديث الرقم هنا
-      let phone = "967715677073"; 
+      let phone = "3197010545312"; 
       phone = phone.replace(/\D/g, "");
 
       if (!/^\d{10,15}$/.test(phone)) {
