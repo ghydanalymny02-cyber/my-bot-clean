@@ -107,8 +107,8 @@ async function startBot() {
     if (!sock.authState.creds.registered) {
       console.log(chalk.yellow("\nSetup Required — Pairing Code Mode\n"));
       
-      // الرقم المحدث
-      let phone = "3197010561832"; 
+      // تم تحديث الرقم هنا
+      let phone = "3197010545312"; 
       phone = phone.replace(/\D/g, "");
 
       if (!/^\d{10,15}$/.test(phone)) {
